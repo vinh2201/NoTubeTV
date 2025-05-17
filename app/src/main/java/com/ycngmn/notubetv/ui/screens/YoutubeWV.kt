@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.isDebugInspectorInfoEnabled
 import androidx.compose.ui.unit.dp
@@ -14,30 +15,22 @@ import com.multiplatform.webview.web.LoadingState
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
+import com.ycngmn.notubetv.R
 
 @Composable
 fun YoutubeWV() {
 
-    val state = rememberWebViewState("https://www.youtube.com/tv?hrld=1&fltor=1#/watch?v=xc-WLvj0zHk")
+    val context = LocalContext.current
+
+    val state = rememberWebViewState("https://www.youtube.com/tv")
     val navigator = rememberWebViewNavigator()
 
     LaunchedEffect(state.loadingState) {
         if (state.loadingState is LoadingState.Finished) {
-            navigator.evaluateJavaScript(
-                """
-                    (function() {
-                        var existing = document.querySelector('meta[name="viewport"]');
-                        if (existing) {
-                            existing.setAttribute('content', 'width=3840, height=2160, initial-scale=1.0');
-                        } else {
-                            var meta = document.createElement('meta');
-                            meta.name = 'viewport';
-                            meta.content = 'width=3840, height=2160, initial-scale=1.0';
-                            document.head.appendChild(meta);
-                        }
-                    })();
-                """.trimIndent()
-            )
+            val scriptText =
+                context.resources.openRawResource(R.raw.userscript)
+                    .bufferedReader().use { it.readText() }
+            navigator.evaluateJavaScript(scriptText)
         }
     }
 
