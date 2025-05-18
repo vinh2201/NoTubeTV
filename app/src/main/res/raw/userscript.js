@@ -1,8 +1,6 @@
 (function () {
   'use strict';
 
-  console.log(window._yttv);
-
   /* eslint-disable no-prototype-builtins */
   var g =
     (typeof globalThis !== 'undefined' && globalThis) ||
@@ -1329,7 +1327,7 @@
           index++;
       }
 
-      showModal('TizenTube Settings', buttons, parameters && parameters.length > 0 ? parameters[0] : 0, 'tt-settings', update);
+      showModal('NotubeTv Settings', buttons, parameters && parameters.length > 0 ? parameters[0] : 0, 'tt-settings', update);
   }
 
   function optionShow(parameters, update) {
@@ -1368,7 +1366,7 @@
           );
       }
 
-      showModal('TizenTube Settings', buttons, parameters.selectedIndex, 'tt-settings-options', update);
+      showModal('NotubeTv Settings', buttons, parameters.selectedIndex, 'tt-settings-options', update);
   }
 
   function resolveCommand(cmd, _) {
@@ -1382,7 +1380,7 @@
       }
   }
 
-  // Patch resolveCommand to be able to change TizenTube settings
+  // Patch resolveCommand to be able to change NotubeTv settings
 
   function patchResolveCommand() {
       for (const key in window._yttv) {
@@ -1391,7 +1389,7 @@
               const ogResolve = window._yttv[key].instance.resolveCommand;
               window._yttv[key].instance.resolveCommand = function (cmd, _) {
                   if (cmd.setClientSettingEndpoint) {
-                      // Command to change client settings. Use TizenTube configuration to change settings.
+                      // Command to change client settings. Use NotubeTv configuration to change settings.
                       for (const settings of cmd.setClientSettingEndpoint.settingDatas) {
                           if (!settings.clientSettingEnum.item.includes('_')) {
                               for (const setting of cmd.setClientSettingEndpoint.settingDatas) {
@@ -3981,7 +3979,7 @@
     );
 
     uiContainer.innerHTML = `
-<h1>TizenTube Theme Configuration</h1>
+<h1>NotubeTv Theme Configuration</h1>
 <label for="__barColor">Navigation Bar Color: <input type="text" id="__barColor"/></label>
 <label for="__routeColor">Main Content Color: <input type="text" id="__routeColor"/></label>
 <div><small>Sponsor segments skipping - https://sponsor.ajay.app</small></div>
@@ -4025,7 +4023,7 @@
           }
         }
         return false;
-      } else if (evt.KEYCODE_DPAD_CENTER) {
+      } else if (evt.keyCode == 404) {
         if (evt.type === 'keydown') {
           modernUI();
         }
@@ -4040,7 +4038,7 @@
     document.addEventListener('keyup', eventHandler, true);
 
 //    setTimeout(() => {
-//      showToast('Welcome to TizenTube', 'Press [GREEN] to open TizenTube Settings, press [BLUE] to open Video Speed Settings and press [RED] to open TizenTube Theme Settings.');
+//      showToast('Welcome to NotubeTv', 'Press [GREEN] to open NotubeTv Settings, press [BLUE] to open Video Speed Settings and press [RED] to open NotubeTv Theme Settings.');
 //    }, 2000);
 
     // Fix UI issues, again. Love, Googol.

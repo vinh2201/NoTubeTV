@@ -1,9 +1,7 @@
 package com.ycngmn.notubetv.ui.screens
 
-import android.util.Log
 import android.view.View
 import android.webkit.CookieManager
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,18 +20,10 @@ import com.ycngmn.notubetv.R
 @Composable
 fun YoutubeWV() {
 
-
-
     val context = LocalContext.current
 
     val state = rememberWebViewState("https://www.youtube.com/tv")
     val navigator = rememberWebViewNavigator()
-
-    BackHandler {
-        Log.d("TAG", "YoutubeWV: ")
-
-        navigator.navigateBack()
-    }
 
     val rawResources = listOf(
         R.raw.userscript,
@@ -65,7 +55,6 @@ fun YoutubeWV() {
                 with(density) { screenWidthPx.toDp() },
                 with(density) { screenHeightPx.toDp() }
             ),
-        captureBackPresses = false,
         state = state,
         navigator = navigator,
         onCreated = { webView ->

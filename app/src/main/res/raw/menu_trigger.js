@@ -1,77 +1,78 @@
-// Replaces search button and triggers the mod menu on select.
-
 (() => {
   const CUSTOM_BUTTON_ID = 'custom-guide-entry-plus';
+  const CONTAINER_SELECTOR = 'yt-focus-container.ytLrGuideResponseContainer';
+  let triggerCount = 0;
 
-  const createCustomButton = () => {
-    const originalButton = document.querySelector('ytlr-button.ytLrGuideEntryRendererButton');
-    if (!originalButton) return null;
-    const customButton = originalButton.cloneNode(true);
-    customButton.id = CUSTOM_BUTTON_ID;
-    customButton.ariaLabel = 'Plus';
-    customButton.tabIndex = '0';
-    customButton.removeAttribute('aria-hidden');
-    customButton.querySelectorAll('[idomkey]').forEach(el => el.removeAttribute('idomkey'));
-    const label = customButton.querySelector('yt-formatted-string');
-    if (label) label.textContent = 'Plus';
-    const icon = customButton.querySelector('yt-icon');
-    if (icon) icon.className = 'ytContribIconBarsThree ytContribIconHost ytLrAvatarLockupIcon';
-    return customButton;
+  const getOriginalButton = () => {
+    const entries = document.querySelectorAll('ytlr-guide-entry-renderer ytlr-button.ytLrGuideEntryRendererButton');
+    return entries[1] || null;
   };
 
-  let focusCount = 0;
-
-  const simulateKeyPress = () => {
-    focusCount++;
-    if (focusCount % 2 === 1) {
-      document.activeElement.dispatchEvent(new KeyboardEvent('keydown', {
+  const triggerModMenu = (element) => {
+    if (++triggerCount % 2 === 1) {
+      const event = new KeyboardEvent('keydown', {
+        key: 'ModTrigger',
+        code: 'KeyF404',
         keyCode: 404,
-        code: 'KeyNotFound',
+        which: 404,
         bubbles: true,
-        cancelable: true
-      }));
+        cancelable: true,
+      });
+      Object.defineProperty(event, 'keyCode', { get: () => 404 });
+      Object.defineProperty(event, 'which', { get: () => 404 });
+      element.dispatchEvent(event);
     }
   };
 
-  const ensureCustomButton = () => {
-    const container = document.querySelector('yt-focus-container.ytLrGuideResponseContainer');
-    if (!container) return;
-    let customButton = document.getElementById(CUSTOM_BUTTON_ID);
-    const originalButton = container.querySelector('ytlr-button.ytLrGuideEntryRendererButton');
-    if (!customButton && originalButton) {
-      customButton = createCustomButton();
-      if (customButton) {
-        originalButton.replaceWith(customButton);
-        customButton.addEventListener('focus', simulateKeyPress);
-      }
+  const createCustomButton = (original) => {
+    const btn = original.cloneNode(true);
+    btn.id = CUSTOM_BUTTON_ID;
+    btn.setAttribute('aria-label', 'NotubeTV Menu');
+    btn.setAttribute('tabindex', '0');
+    btn.removeAttribute('aria-hidden');
+    btn.querySelectorAll('[idomkey]').forEach(el => el.removeAttribute('idomkey'));
+
+    const label = btn.querySelector('yt-formatted-string');
+    if (label) label.textContent = 'NotubeTV Menu';
+
+    const icon = btn.querySelector('yt-icon');
+    if (icon) {
+      icon.className = 'ytContribIconBarsThree ytContribIconHost ytLrAvatarLockupIcon';
+      icon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>';
     }
-    if (customButton && originalButton && customButton !== originalButton) {
-      originalButton.replaceWith(customButton);
-      customButton.addEventListener('focus', simulateKeyPress);
+
+    btn.addEventListener('focus', () => triggerModMenu(btn));
+    return btn;
+  };
+
+  const replaceButton = () => {
+    const container = document.querySelector(CONTAINER_SELECTOR);
+    if (!container) return;
+
+    const original = getOriginalButton();
+    if (!original) return;
+
+    if (!document.getElementById(CUSTOM_BUTTON_ID)) {
+      const custom = createCustomButton(original);
+      original.replaceWith(custom);
     }
   };
 
   const monitorGuide = () => {
-    const container = document.querySelector('yt-focus-container.ytLrGuideResponseContainer');
-    if (!container) return;
-    new MutationObserver((mutations) => {
-      if (mutations.some(m => m.addedNodes.length || m.removedNodes.length ||
-          m.target.matches('yt-focus-container.ytLrGuideResponseContainer, ytlr-button.ytLrGuideEntryRendererButton'))) {
-        ensureCustomButton();
-      }
-    }).observe(container, { childList: true, subtree: true, attributes: true });
-    const parent = container.parentElement;
-    if (parent) {
-      new MutationObserver(ensureCustomButton).observe(parent, { childList: true, subtree: true });
+    const container = document.querySelector(CONTAINER_SELECTOR);
+    if (container) {
+      new MutationObserver(() => replaceButton()).observe(container, { childList: true, subtree: true });
+      replaceButton();
+    } else {
+      new MutationObserver(() => {
+        const container = document.querySelector(CONTAINER_SELECTOR);
+        if (container) {
+          replaceButton();
+          new MutationObserver(() => replaceButton()).observe(container, { childList: true, subtree: true });
+        }
+      }).observe(document.body, { childList: true, subtree: true });
     }
-    ensureCustomButton();
   };
 
-  const interval = setInterval(() => {
-    const container = document.querySelector('yt-focus-container.ytLrGuideResponseContainer');
-    if (container) {
-      clearInterval(interval);
-      monitorGuide();
-    }
-  }, 300);
+  monitorGuide();
 })();
