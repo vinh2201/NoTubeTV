@@ -952,6 +952,16 @@
   }
 
   function showModal(title, content, selectIndex, id, update) {
+
+      if (!update) {
+          const closeCmd = {
+            signalAction: {
+              signal: 'POPUP_BACK'
+            }
+          };
+          resolveCommand(closeCmd);
+        }
+
       const modalCmd = {
           openPopupAction: {
               popupType: 'MODAL',
@@ -1169,6 +1179,7 @@
   }
 
   function modernUI(update, parameters) {
+  document.querySelectorAll('[id^=tt-settings]').forEach(el => el.remove());
       const settings = [
           {
               name: 'Ad block',
@@ -1423,14 +1434,16 @@
               optionShow(parameters, parameters.update);
               break;
           case 'SKIP':
-              const kE = document.createEvent('Event');
-              kE.initEvent('keydown', true, true);
-              kE.keyCode = 27;
-              kE.which = 27;
-              document.dispatchEvent(kE);
-
-              document.querySelector('video').currentTime = parameters.time;
-              break;
+              const video = document.querySelector('video');
+                if (video) {
+                  video.currentTime = parameters.time;
+                }
+                resolveCommand({
+                  signalAction: {
+                    signal: 'POPUP_BACK'
+                  }
+                });
+                break;
       }
   }
 
