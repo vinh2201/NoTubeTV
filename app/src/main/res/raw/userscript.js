@@ -454,7 +454,6 @@
           try {
             headers.append(key, value);
           } catch (error) {
-            console.warn('Response ' + error.message);
           }
         }
       });
@@ -777,18 +776,13 @@
   try {
     localConfig = JSON.parse(window.localStorage[CONFIG_KEY]);
   } catch (err) {
-    console.warn('Config read failed:', err);
+    //console.warn('Config read failed:', err);
     localConfig = defaultConfig;
   }
 
   function configRead(key) {
     if (localConfig[key] === undefined) {
-      console.warn(
-        'Populating key',
-        key,
-        'with default value',
-        defaultConfig[key]
-      );
+
       localConfig[key] = defaultConfig[key];
     }
 
@@ -796,7 +790,6 @@
   }
 
   function configWrite(key, value) {
-    console.info('Setting key', key, 'to', value);
     localConfig[key] = value;
     window.localStorage[CONFIG_KEY] = JSON.stringify(localConfig);
   }
@@ -1802,10 +1795,8 @@
       const results = await resp.json();
 
       const result = results.find((v) => v.videoID === this.videoID);
-      console.info(this.videoID, 'Got it:', result);
 
       if (!result || !result.segments || !result.segments.length) {
-        console.info(this.videoID, 'No segments found.');
         return;
       }
 
@@ -1849,12 +1840,10 @@
 
       this.video = document.querySelector('video');
       if (!this.video) {
-        console.info(this.videoID, 'No video yet...');
         this.attachVideoTimeout = setTimeout(() => this.attachVideo(), 100);
         return;
       }
 
-      console.info(this.videoID, 'Video found, binding...');
 
       this.video.addEventListener('play', this.scheduleSkipHandler);
       this.video.addEventListener('pause', this.scheduleSkipHandler);
@@ -1864,12 +1853,10 @@
 
     buildOverlay() {
       if (this.segmentsoverlay) {
-        console.info('Overlay already built');
         return;
       }
 
       if (!this.video || !this.video.duration) {
-        console.info('No video duration yet');
         return;
       }
 
@@ -1889,7 +1876,6 @@
         elm.style['background'] = barType.color;
         elm.style['opacity'] = barType.opacity;
         elm.style['-webkit-transform'] = transform;
-        console.info('Generated element', elm, 'from', segment, transform);
         this.segmentsoverlay.appendChild(elm);
       });
 
@@ -1898,7 +1884,6 @@
           if (m.removedNodes) {
             for (const node of m.removedNodes) {
               if (node === this.segmentsoverlay) {
-                console.info('bringing back segments overlay');
                 this.slider.appendChild(this.segmentsoverlay);
               }
             }
@@ -1924,12 +1909,10 @@
       this.nextSkipTimeout = null;
 
       if (!this.active) {
-        console.info(this.videoID, 'No longer active, ignoring...');
         return;
       }
 
       if (this.video.paused) {
-        console.info(this.videoID, 'Currently paused, ignoring...');
         return;
       }
 
@@ -1944,37 +1927,23 @@
       nextSegments.sort((s1, s2) => s1.segment[0] - s2.segment[0]);
 
       if (!nextSegments.length) {
-        console.info(this.videoID, 'No more segments');
         return;
       }
 
       const [segment] = nextSegments;
       const [start, end] = segment.segment;
-      console.info(
-        this.videoID,
-        'Scheduling skip of',
-        segment,
-        'in',
-        start - this.video.currentTime
-      );
+
 
       this.nextSkipTimeout = setTimeout(() => {
         if (this.video.paused) {
-          console.info(this.videoID, 'Currently paused, ignoring...');
           return;
         }
         if (!this.skippableCategories.includes(segment.category)) {
-          console.info(
-            this.videoID,
-            'Segment',
-            segment.category,
-            'is not skippable, ignoring...'
-          );
+
           return;
         }
 
         const skipName = barTypes[segment.category]?.name || segment.category;
-        console.info(this.videoID, 'Skipping', segment);
         if (!this.manualSkippableCategories.includes(segment.category)) {
           showToast('SponsorBlock', `Skipping ${skipName}`);
           this.video.currentTime = end;
@@ -1984,7 +1953,6 @@
     }
 
     destroy() {
-      console.info(this.videoID, 'Destroying');
 
       this.active = false;
 
@@ -2043,20 +2011,12 @@
         videoID &&
         (!window.sponsorblock || window.sponsorblock.videoID != videoID);
 
-      console.info(
-        'hashchange',
-        videoID,
-        window.sponsorblock,
-        window.sponsorblock ? window.sponsorblock.videoID : null,
-        needsReload
-      );
 
       if (needsReload) {
         if (window.sponsorblock) {
           try {
             window.sponsorblock.destroy();
           } catch (err) {
-            console.warn('window.sponsorblock.destroy() failed!', err);
           }
           window.sponsorblock = null;
         }
@@ -2064,8 +2024,6 @@
         if (configRead('enableSponsorBlock')) {
           window.sponsorblock = new SponsorBlockHandler(videoID);
           window.sponsorblock.init();
-        } else {
-          console.info('SponsorBlock disabled, not loading');
         }
       }
     },
@@ -3928,27 +3886,15 @@
     uiContainer.classList.add('ytaf-ui-container');
     uiContainer.style['display'] = 'none';
     uiContainer.setAttribute('tabindex', 0);
-    uiContainer.addEventListener(
-      'focus',
-      () => console.info('uiContainer focused!'),
-      true
-    );
-    uiContainer.addEventListener(
-      'blur',
-      () => console.info('uiContainer blured!'),
-      true
-    );
+
 
     uiContainer.addEventListener(
       'keydown',
       (evt) => {
-        console.info('uiContainer key event:', evt.type, evt.keyCode, evt);
         if (evt.keyCode !== 404 && evt.keyCode !== 172) {
           if (evt.keyCode in ARROW_KEY_CODE) {
             navigate(ARROW_KEY_CODE[evt.keyCode]);
           } else if (evt.keyCode === 13 || evt.keyCode === 32) {
-            // "OK" button
-            console.log('OK button pressed');
             const focusedElement = document.querySelector(':focus');
             if (focusedElement.type === 'checkbox') {
               focusedElement.checked = !focusedElement.checked;
@@ -4000,24 +3946,15 @@
 
     var eventHandler = (evt) => {
       // We handle key events ourselves.
-      console.info(
-        'Key event:',
-        evt.type,
-        evt.keyCode,
-        evt.keyCode,
-        evt.defaultPrevented
-      );
+
       if (evt.keyCode == 403) {
-        console.info('Taking over!');
         evt.preventDefault();
         evt.stopPropagation();
         if (evt.type === 'keydown') {
           if (uiContainer.style.display === 'none') {
-            console.info('Showing and focusing!');
             uiContainer.style.display = 'block';
             uiContainer.focus();
           } else {
-            console.info('Hiding!');
             uiContainer.style.display = 'none';
             uiContainer.blur();
           }
