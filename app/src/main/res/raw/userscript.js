@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  console.log(window._yttv);
+
   /* eslint-disable no-prototype-builtins */
   var g =
     (typeof globalThis !== 'undefined' && globalThis) ||
@@ -4023,7 +4025,7 @@
           }
         }
         return false;
-      } else if (evt.keyCode == 404) {
+      } else if (evt.KEYCODE_DPAD_CENTER) {
         if (evt.type === 'keydown') {
           modernUI();
         }
@@ -4037,9 +4039,9 @@
     document.addEventListener('keypress', eventHandler, true);
     document.addEventListener('keyup', eventHandler, true);
 
-    setTimeout(() => {
-      showToast('Welcome to TizenTube', 'Press [GREEN] to open TizenTube Settings, press [BLUE] to open Video Speed Settings and press [RED] to open TizenTube Theme Settings.');
-    }, 2000);
+//    setTimeout(() => {
+//      showToast('Welcome to TizenTube', 'Press [GREEN] to open TizenTube Settings, press [BLUE] to open Video Speed Settings and press [RED] to open TizenTube Theme Settings.');
+//    }, 2000);
 
     // Fix UI issues, again. Love, Googol.
 
