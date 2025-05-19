@@ -1192,39 +1192,6 @@
               value: 'enableSponsorBlock'
           },
           {
-              name: 'Manual SponsorBlock Segment Skip',
-              icon: 'DOLLAR_SIGN',
-              value: null,
-              options: [
-                  {
-                      name: 'Skip Sponsor Segments',
-                      icon: 'MONEY_HEART',
-                      value: 'sponsor'
-                  },
-                  {
-                      name: 'Skip Intro Segments',
-                      icon: 'PLAY_CIRCLE',
-                      value: 'intro'
-                  },
-                  {
-                      name: 'Skip Outro Segments',
-                      value: 'outro'
-                  },
-                  {
-                      name: 'Skip Interaction Reminder Segments',
-                      value: 'interaction'
-                  },
-                  {
-                      name: 'Skip Self-Promotion Segments',
-                      value: 'selfpromo'
-                  },
-                  {
-                      name: 'Skip Off-Topic Music Segments',
-                      value: 'music_offtopic'
-                  }
-              ]
-          },
-          {
               name: 'Skip Sponsor Segments',
               icon: 'MONEY_HEART',
               value: 'enableSponsorBlockSponsor'
@@ -1885,7 +1852,7 @@
         const transform = `translateX(${(start / videoDuration) * 100.0
         }%) scaleX(${(end - start) / videoDuration})`;
         const elm = document.createElement('div');
-        elm.classList.add('ytlr-progress-bar__played');
+        elm.classList.add('ytLrProgressBarPlayed');
         elm.style['background'] = barType.color;
         elm.style['opacity'] = barType.opacity;
         elm.style['-webkit-transform'] = transform;
@@ -1905,7 +1872,7 @@
       });
 
       this.sliderInterval = setInterval(() => {
-        this.slider = document.querySelector('.ytlr-progress-bar__slider');
+        this.slider = document.querySelector('[idomkey="slider"]');
         if (this.slider) {
           clearInterval(this.sliderInterval);
           this.sliderInterval = null;
