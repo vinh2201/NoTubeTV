@@ -1,23 +1,25 @@
 package com.ycngmn.notubetv.ui.screens
 
-import android.util.Log
+import android.app.Activity
 import android.view.View
 import android.webkit.CookieManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.isDebugInspectorInfoEnabled
 import androidx.compose.ui.unit.dp
 import com.multiplatform.webview.web.LoadingState
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import com.ycngmn.notubetv.R
+import com.ycngmn.notubetv.utils.ExitBridge
 
 @Composable
 fun YoutubeWV() {
@@ -27,22 +29,24 @@ fun YoutubeWV() {
     val state = rememberWebViewState("https://www.youtube.com/tv")
     val navigator = rememberWebViewNavigator()
 
-    BackHandler {
-        Log.d("wtf", "YoutubeWV: ")
+    val exitTrigger = remember { mutableStateOf(false) }
 
+    BackHandler {
         navigator.evaluateJavaScript(
             context.resources.openRawResource(R.raw.back_bridge)
                 .bufferedReader().use { it.readText() }
         )
     }
 
+    if (exitTrigger.value) {
+        (context as Activity).finish()
+    }
 
-
-    val rawResources = listOf(
+    val rawResources = remember { listOf(
         R.raw.userscript,
         R.raw.spoof_viewport,
         R.raw.menu_trigger
-    )
+    ) }
 
     LaunchedEffect(state.loadingState) {
         if (state.loadingState is LoadingState.Finished) {
@@ -61,7 +65,6 @@ fun YoutubeWV() {
     val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
 
-
     WebView(
         captureBackPresses = false,
         modifier = Modifier
@@ -79,21 +82,23 @@ fun YoutubeWV() {
             cookieManager.flush()
 
             state.webSettings.apply {
-                customUserAgentString = "Mozilla/5.0 (Linux; Android 11; SHIELD Android TV Build/RQ3A.210805.001.A1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.5615.138 Safari/537.36"
+                // a random short user agent to enforce leanback UI.
+                customUserAgentString = "Roku/DVP-5.0 (025.00E08043A)"
                 isJavaScriptEnabled = true
 
-
                 androidWebSettings.apply {
-                    isDebugInspectorInfoEnabled = true
+                    //isDebugInspectorInfoEnabled = true
                     useWideViewPort = true
                     domStorageEnabled = true
                     hideDefaultVideoPoster = true
                     mediaPlaybackRequiresUserGesture = false
-                    allowFileAccess = true
                 }
             }
 
             webView.apply {
+
+                addJavascriptInterface(ExitBridge(exitTrigger), "ExitBridge")
+
                 setLayerType(View.LAYER_TYPE_HARDWARE, null)
                 setInitialScale(35)
 
