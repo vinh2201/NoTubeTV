@@ -1769,7 +1769,7 @@
     }
   };
 
-  const sponsorblockAPI = 'https://sponsorblock.inf.re/api';
+  const sponsorblockAPI = 'https://api.sponsor.ajay.app/api';
 
   class SponsorBlockHandler {
     video = null;

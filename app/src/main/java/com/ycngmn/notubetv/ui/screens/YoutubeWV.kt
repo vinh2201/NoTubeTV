@@ -1,7 +1,9 @@
 package com.ycngmn.notubetv.ui.screens
 
+import android.util.Log
 import android.view.View
 import android.webkit.CookieManager
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,6 +26,17 @@ fun YoutubeWV() {
 
     val state = rememberWebViewState("https://www.youtube.com/tv")
     val navigator = rememberWebViewNavigator()
+
+    BackHandler {
+        Log.d("wtf", "YoutubeWV: ")
+
+        navigator.evaluateJavaScript(
+            context.resources.openRawResource(R.raw.back_bridge)
+                .bufferedReader().use { it.readText() }
+        )
+    }
+
+
 
     val rawResources = listOf(
         R.raw.userscript,
@@ -50,6 +63,7 @@ fun YoutubeWV() {
 
 
     WebView(
+        captureBackPresses = false,
         modifier = Modifier
             .size(
                 with(density) { screenWidthPx.toDp() },
@@ -65,7 +79,7 @@ fun YoutubeWV() {
             cookieManager.flush()
 
             state.webSettings.apply {
-                customUserAgentString = "Roku/DVP-5.0 (025.00E08043A)"
+                customUserAgentString = "Mozilla/5.0 (Linux; Android 11; SHIELD Android TV Build/RQ3A.210805.001.A1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.5615.138 Safari/537.36"
                 isJavaScriptEnabled = true
 
 
