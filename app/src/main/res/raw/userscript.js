@@ -1178,7 +1178,7 @@
       }
   }
 
-  function modernUI(update, parameters) {
+  window.modernUI = function modernUI(update, parameters) {
   document.querySelectorAll('[id^=tt-settings]').forEach(el => el.remove());
       const settings = [
           {
@@ -3923,7 +3923,7 @@
       configWrite('routeColor', evt.target.value);
       updateStyle();
     });
-
+/*
     var eventHandler = (evt) => {
       // We handle key events ourselves.
 
@@ -3954,12 +3954,12 @@
     document.addEventListener('keypress', eventHandler, true);
     document.addEventListener('keyup', eventHandler, true);
 
-//    setTimeout(() => {
-//      showToast('Welcome to NotubeTv', 'Press [GREEN] to open NotubeTv Settings, press [BLUE] to open Video Speed Settings and press [RED] to open NotubeTv Theme Settings.');
-//    }, 2000);
+    setTimeout(() => {
+     showToast('Welcome to NotubeTv', 'Press [GREEN] to open NotubeTv Settings, press [BLUE] to open Video Speed Settings and press [RED] to open NotubeTv Theme Settings.');
+    }, 2000);
 
     // Fix UI issues, again. Love, Googol.
-
+*/
     if (configRead('enableFixedUI')) {
       try {
         const observer = new MutationObserver((_, _2) => {
