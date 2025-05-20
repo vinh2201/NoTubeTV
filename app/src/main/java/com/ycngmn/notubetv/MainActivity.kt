@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import com.ycngmn.notubetv.ui.screens.YoutubeWV
-import com.ycngmn.notubetv.ui.theme.NotubeTVTheme
+import com.ycngmn.notubetv.ui.theme.NoTubeTVTheme
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalTvMaterial3Api::class)
@@ -18,7 +18,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         window.setLayout(3840, 2160)
         setContent {
-            NotubeTVTheme {
+            NoTubeTVTheme {
                Box(modifier = Modifier.fillMaxSize()) { YoutubeWV() }
             }
         }
