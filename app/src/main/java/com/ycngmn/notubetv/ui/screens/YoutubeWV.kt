@@ -83,7 +83,7 @@ fun YoutubeWV() {
 
             state.webSettings.apply {
                 // a random short user agent to enforce leanback UI.
-                customUserAgentString = "Roku/DVP-5.0 (025.00E08043A)"
+                customUserAgentString = "Mozilla/5.0 (PS4; Leanback Shell) Gecko/20100101 Firefox/65.0 LeanbackShell/01.00.01.75 Sony PS4/ (PS4, , no, CH)"
                 isJavaScriptEnabled = true
 
                 androidWebSettings.apply {
