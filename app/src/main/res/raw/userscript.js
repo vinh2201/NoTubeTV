@@ -765,7 +765,6 @@
     focusContainerColor: '#0f0f0f',
     routeColor: '#0f0f0f',
     enableFixedUI: true,
-    enableHqThumbnails: true,
     enableChapters: true,
     enableLongPress: true,
     enableShorts: true
@@ -1233,11 +1232,6 @@
               value: 'enableFixedUI'
           },
           {
-              name: 'High Quality Thumbnails',
-              icon: 'VIDEO_QUALITY',
-              value: 'enableHqThumbnails'
-          },
-          {
               name: 'Chapters',
               icon: 'BOOKMARK_BORDER',
               value: 'enableChapters'
@@ -1471,7 +1465,6 @@
 
     if (r?.continuationContents?.horizontalListContinuation?.items) {
       deArrowify(r.continuationContents.horizontalListContinuation.items);
-      hqify(r.continuationContents.horizontalListContinuation.items);
       addLongPress(r.continuationContents.horizontalListContinuation.items);
     }
 
@@ -1533,7 +1526,6 @@
     for (const shelve of shelves) {
       if (shelve.shelfRenderer) {
         deArrowify(shelve.shelfRenderer.content.horizontalListRenderer.items);
-        hqify(shelve.shelfRenderer.content.horizontalListRenderer.items);
         addLongPress(shelve.shelfRenderer.content.horizontalListRenderer.items);
       }
     }
@@ -1567,24 +1559,6 @@
             }
           }
         });
-      }
-    }
-  }
-
-
-  function hqify(items) {
-    for (const item of items) {
-      if (item.tileRenderer.style !== 'TILE_STYLE_YTLR_DEFAULT') continue;
-      if (configRead('enableHqThumbnails')) {
-        const videoID = item.tileRenderer.contentId;
-        const queryArgs = item.tileRenderer.header.tileHeaderRenderer.thumbnail.thumbnails[0].url.split('?')[1];
-        item.tileRenderer.header.tileHeaderRenderer.thumbnail.thumbnails = [
-          {
-            url: `https://i.ytimg.com/vi/${videoID}/maxresdefault.jpg${queryArgs ? `?${queryArgs}` : ''}`,
-            width: 1280,
-            height: 720
-          }
-        ];
       }
     }
   }
