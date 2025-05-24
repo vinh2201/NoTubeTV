@@ -14,17 +14,27 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.multiplatform.webview.web.LoadingState
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import com.ycngmn.notubetv.R
 import com.ycngmn.notubetv.utils.ExitBridge
+import com.ycngmn.notubetv.utils.fetchScripts
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 
 @Composable
 fun YoutubeWV() {
 
     val context = LocalContext.current
+    val scripts = remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            scripts.value = fetchScripts()
+        }
+    }
 
     val state = rememberWebViewState("https://www.youtube.com/tv")
     val navigator = rememberWebViewNavigator()
@@ -38,26 +48,14 @@ fun YoutubeWV() {
         )
     }
 
-    if (exitTrigger.value) {
-        (context as Activity).finish()
+    LaunchedEffect(scripts.value) {
+        if (scripts.value.isNotEmpty())
+            navigator.evaluateJavaScript(scripts.value)
     }
 
-    val rawResources = remember { listOf(
-        R.raw.userscript,
-        R.raw.spoof_viewport,
-        R.raw.menu_trigger
-    ) }
+    if (exitTrigger.value) (context as Activity).finish()
 
-    LaunchedEffect(state.loadingState) {
-        if (state.loadingState is LoadingState.Finished) {
-            for (script in rawResources) {
-                val js =
-                    context.resources.openRawResource(script)
-                        .bufferedReader().use { it.readText() }
-                navigator.evaluateJavaScript(js)
-            }
-        }
-    }
+
 
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current

@@ -39,6 +39,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
     api(libs.compose.webview.multiplatform)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
