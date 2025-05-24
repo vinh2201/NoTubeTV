@@ -1,6 +1,6 @@
 package com.ycngmn.notubetv.ui.screens
 
-import android.app.Activity
+import android.annotation.SuppressLint
 import android.view.View
 import android.webkit.CookieManager
 import androidx.activity.compose.BackHandler
@@ -12,7 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewNavigator
@@ -22,8 +21,10 @@ import com.ycngmn.notubetv.utils.ExitBridge
 import com.ycngmn.notubetv.utils.fetchScripts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.system.exitProcess
 
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun YoutubeWV() {
 
@@ -53,20 +54,16 @@ fun YoutubeWV() {
             navigator.evaluateJavaScript(scripts.value)
     }
 
-    if (exitTrigger.value) (context as Activity).finish()
+    if (exitTrigger.value) exitProcess(0)
 
-    val configuration = LocalConfiguration.current
-    val density = LocalDensity.current
-
-    val screenWidthPx = with(density) { configuration.screenWidthDp.dp.toPx() }
-    val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
+    val config = LocalConfiguration.current
 
     WebView(
         captureBackPresses = false,
         modifier = Modifier
             .size(
-                with(density) { screenWidthPx.toDp() },
-                with(density) { screenHeightPx.toDp() }
+                config.screenWidthDp.dp ,
+                config.screenHeightDp.dp
             ),
         state = state,
         navigator = navigator,
@@ -78,8 +75,7 @@ fun YoutubeWV() {
             cookieManager.flush()
 
             state.webSettings.apply {
-                // a random short user agent to enforce leanback UI.
-                customUserAgentString = "Mozilla/5.0 (PS4; Leanback Shell) Gecko/20100101 Firefox/65.0 LeanbackShell/01.00.01.75 Sony PS4/ (PS4, , no, CH)"
+                customUserAgentString = "Mozilla/5.0 (Linux; Android 12) Cobalt/22.2.3-gold (PS4)"
                 isJavaScriptEnabled = true
 
                 androidWebSettings.apply {
@@ -88,6 +84,7 @@ fun YoutubeWV() {
                     domStorageEnabled = true
                     hideDefaultVideoPoster = true
                     mediaPlaybackRequiresUserGesture = false
+                    allowFileAccess = true
                 }
             }
 
