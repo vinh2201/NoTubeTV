@@ -48,14 +48,12 @@ fun YoutubeWV() {
         )
     }
 
-    LaunchedEffect(scripts.value) {
+    LaunchedEffect(scripts.value, state.loadingState) {
         if (scripts.value.isNotEmpty())
             navigator.evaluateJavaScript(scripts.value)
     }
 
     if (exitTrigger.value) (context as Activity).finish()
-
-
 
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
