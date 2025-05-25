@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -23,6 +24,7 @@ import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import com.ycngmn.notubetv.R
 import com.ycngmn.notubetv.utils.ExitBridge
+import com.ycngmn.notubetv.utils.PermissionBridge
 import com.ycngmn.notubetv.utils.fetchScripts
 import com.ycngmn.notubetv.utils.hasPermission
 import kotlinx.coroutines.Dispatchers
@@ -39,8 +41,9 @@ fun YoutubeWV() {
     val state = rememberWebViewState("https://www.youtube.com/tv")
     val navigator = rememberWebViewNavigator()
 
-    val scripts = remember { mutableStateOf("") }
+    val scripts = rememberSaveable { mutableStateOf("") }
     val exitTrigger = remember { mutableStateOf(false) }
+    val permissionTrigger = rememberSaveable { mutableStateOf(false) }
 
     BackHandler {
         navigator.evaluateJavaScript(
@@ -51,7 +54,9 @@ fun YoutubeWV() {
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { }
+    ) { isGranted ->
+        if (!isGranted) permissionTrigger.value = false
+    }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -68,6 +73,9 @@ fun YoutubeWV() {
 
     val config = LocalConfiguration.current
 
+    if (!hasPermission(context) && permissionTrigger.value) {
+        permissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO) }
+
     WebView(
         captureBackPresses = false,
         modifier = Modifier
@@ -78,7 +86,6 @@ fun YoutubeWV() {
         state = state,
         navigator = navigator,
         onCreated = { webView ->
-
             // Set up cookies
             val cookieManager = CookieManager.getInstance()
             cookieManager.setAcceptCookie(true)
@@ -101,6 +108,7 @@ fun YoutubeWV() {
 
             webView.apply {
                 addJavascriptInterface(ExitBridge(exitTrigger), "ExitBridge")
+                addJavascriptInterface(PermissionBridge(permissionTrigger), "PermissionBridge")
 
                 setLayerType(View.LAYER_TYPE_HARDWARE, null)
                 setInitialScale(35)
@@ -115,10 +123,6 @@ fun YoutubeWV() {
 
                 webChromeClient = WebChromeClient()
             }
-
-            if (!hasPermission(context))
-                permissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
-
         }
     )
 }

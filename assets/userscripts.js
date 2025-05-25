@@ -29,7 +29,6 @@
 
     const searchBar = getSearchBar();
     if (!searchBar) return;
-    console.log('Search bar found');
 
     const parent = searchBar.parentNode;
     if (parent.querySelector('button[data-notubetv="menu"]'))
@@ -133,6 +132,27 @@
 })();
 /* End speedMenuTrigger.js */
 
+/* Start permissionTrigger.js */
+(function () {
+    document.addEventListener(
+        "keydown",
+        (event) => {
+            if (event.key === "Enter" || event.keyCode === 13) {
+                const micBtn = document.querySelector("ytlr-search-voice-mic-button");
+                if (micBtn) {
+                    const isFocused = micBtn.classList.contains("ytLrSearchVoiceMicButtonFocused");
+                    if (isFocused) {
+                        if (typeof PermissionBridge !== 'undefined' && PermissionBridge.onTrigger)
+                            PermissionBridge.onTrigger();
+                    }
+                }
+            }
+        },
+        true
+    );
+})();
+/* End permissionTrigger.js */
+
 /* Start exitBridge.js */
 // Exit Bridge to react to exit button call.
 (function () {
@@ -142,24 +162,11 @@
         if (exitButton) {
             exitButton.addEventListener('keydown', (e) => {
                 if (
-                    e.key === 'Enter' &&
+                    (e.key === 'Enter' || e.keyCode === 13) &&
                     typeof ExitBridge !== 'undefined' &&
                     ExitBridge.onExitCalled
-                ) {
-                    ExitBridge.onExitCalled();
-                }
-            });
-            exitButton.addEventListener('click', (e) => {
-                if (
-                    typeof ExitBridge !== 'undefined' &&
-                    ExitBridge.onExitCalled
-                ) {
-                    ExitBridge.onExitCalled();
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-            });
-
+                ) { ExitBridge.onExitCalled(); }
+            },true);
             obs.disconnect();
         }
     });
