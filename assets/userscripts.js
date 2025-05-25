@@ -165,7 +165,11 @@
                     (e.key === 'Enter' || e.keyCode === 13) &&
                     typeof ExitBridge !== 'undefined' &&
                     ExitBridge.onExitCalled
-                ) { ExitBridge.onExitCalled(); }
+                ) {
+                e.preventDefault();
+                e.stopPropagation();
+                ExitBridge.onExitCalled();
+                }
             },true);
             obs.disconnect();
         }
