@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.view.View
 import android.webkit.CookieManager
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -93,7 +94,7 @@ fun YoutubeWV() {
             cookieManager.flush()
 
             state.webSettings.apply {
-                customUserAgentString = "Mozilla/5.0 (Linux; Android 12) Cobalt/22.2.3-gold (PS4)"
+                customUserAgentString = "Mozilla/5.0 (PS4; Leanback Shell) Cobalt/24.lts.13.1032728-gold (Sony, PS4, Wired)"
                 isJavaScriptEnabled = true
 
                 androidWebSettings.apply {
@@ -121,7 +122,11 @@ fun YoutubeWV() {
                 settings.setSupportZoom(true)
                 settings.loadWithOverviewMode = true
 
-                webChromeClient = WebChromeClient()
+                webChromeClient = object : WebChromeClient() {
+                    override fun onPermissionRequest(request: PermissionRequest?) {
+                        request?.grant(request.resources)
+                    }
+                }
             }
         }
     )
