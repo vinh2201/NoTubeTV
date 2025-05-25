@@ -171,7 +171,6 @@
                 ExitBridge.onExitCalled();
                 }
             },true);
-            obs.disconnect();
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });
