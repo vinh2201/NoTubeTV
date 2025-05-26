@@ -4,11 +4,8 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.view.View
 import android.webkit.CookieManager
-import android.webkit.PermissionRequest
-import android.webkit.WebChromeClient
+import android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,10 +21,12 @@ import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import com.ycngmn.notubetv.R
+import com.ycngmn.notubetv.ui.components.UpdateDialog
 import com.ycngmn.notubetv.utils.ExitBridge
-import com.ycngmn.notubetv.utils.PermissionBridge
+import com.ycngmn.notubetv.utils.ReleaseData
 import com.ycngmn.notubetv.utils.fetchScripts
-import com.ycngmn.notubetv.utils.hasPermission
+import com.ycngmn.notubetv.utils.getUpdate
+import com.ycngmn.notubetv.utils.permissionHandlerChrome
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -44,7 +43,9 @@ fun YoutubeWV() {
 
     val scripts = rememberSaveable { mutableStateOf("") }
     val exitTrigger = remember { mutableStateOf(false) }
-    val permissionTrigger = rememberSaveable { mutableStateOf(false) }
+
+    val updateData = remember { mutableStateOf<ReleaseData?>(null) }
+
 
     BackHandler {
         navigator.evaluateJavaScript(
@@ -53,17 +54,16 @@ fun YoutubeWV() {
         )
     }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (!isGranted) permissionTrigger.value = false
-    }
 
     LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            scripts.value = fetchScripts()
-        }
+        val fetchedScripts = withContext(Dispatchers.IO) { fetchScripts() }
+        val update = withContext(Dispatchers.IO) { getUpdate(context) }
+
+        scripts.value = fetchedScripts
+        if (update!= null) updateData.value = update
     }
+
+    if (updateData.value != null) UpdateDialog(updateData.value!!)
 
     LaunchedEffect(scripts.value, state.loadingState) {
         if (scripts.value.isNotEmpty() && state.loadingState is LoadingState.Finished)
@@ -74,18 +74,15 @@ fun YoutubeWV() {
 
     val config = LocalConfiguration.current
 
-    if (!hasPermission(context) && permissionTrigger.value) {
-        permissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO) }
-
     WebView(
-        captureBackPresses = false,
-        modifier = Modifier
-            .size(
-                config.screenWidthDp.dp ,
-                config.screenHeightDp.dp
-            ),
+        modifier = Modifier.size(
+            config.screenWidthDp.dp,
+            config.screenHeightDp.dp
+        ),
         state = state,
         navigator = navigator,
+        platformWebViewParams = permissionHandlerChrome(context),
+        captureBackPresses = false,
         onCreated = { webView ->
             // Set up cookies
             val cookieManager = CookieManager.getInstance()
@@ -103,30 +100,22 @@ fun YoutubeWV() {
                     domStorageEnabled = true
                     hideDefaultVideoPoster = true
                     mediaPlaybackRequiresUserGesture = false
-                    allowFileAccess = true
                 }
             }
 
             webView.apply {
                 addJavascriptInterface(ExitBridge(exitTrigger), "ExitBridge")
-                addJavascriptInterface(PermissionBridge(permissionTrigger), "PermissionBridge")
 
                 setLayerType(View.LAYER_TYPE_HARDWARE, null)
                 setInitialScale(35)
 
                 // Hide scrollbars
-                overScrollMode = View.OVER_SCROLL_NEVER
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
 
                 settings.setSupportZoom(true)
                 settings.loadWithOverviewMode = true
-
-                webChromeClient = object : WebChromeClient() {
-                    override fun onPermissionRequest(request: PermissionRequest?) {
-                        request?.grant(request.resources)
-                    }
-                }
+                settings.mixedContentMode = MIXED_CONTENT_ALWAYS_ALLOW
             }
         }
     )
