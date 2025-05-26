@@ -29,18 +29,23 @@ import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import com.multiplatform.webview.web.WebViewNavigator
 import com.ycngmn.notubetv.utils.ReleaseData
 import kotlinx.coroutines.launch
 
 @Composable
-fun UpdateDialog(releaseData: ReleaseData) {
+fun UpdateDialog(releaseData: ReleaseData, navigator: WebViewNavigator) {
     val isShowDialog = rememberSaveable { mutableStateOf(true) }
+    val isDownload = remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
 
+    if (isDownload.value)
+        UpdateAppScreen(releaseData.tagName, releaseData.downloadUrl)
+
     if (isShowDialog.value) {
         Dialog(
-            onDismissRequest = { isShowDialog.value = false },
+            onDismissRequest = { isShowDialog.value = false }
         ) {
             Surface(
                 shape = RoundedCornerShape(10.dp),
@@ -74,11 +79,18 @@ fun UpdateDialog(releaseData: ReleaseData) {
                         YTButton(
                             "Update Now",
                             Modifier.focusRequester(focusRequester)
-                        ) {}
+                        ) {
+                            isDownload.value = true
+                            isShowDialog.value = false
+                        }
 
                         Spacer(modifier = Modifier.weight(1F))
 
-                        YTButton("Skip this version") { }
+                        YTButton("Skip this version") {
+                            navigator.evaluateJavaScript(
+                                "configWrite('skipVersionName', '${releaseData.tagName}')"
+                            ) { isShowDialog.value = false }
+                        }
                     }
                 }
             }
@@ -105,7 +117,6 @@ fun YTButton(
             contentColor = Color.White,
             focusedContainerColor = Color.White,
             focusedContentColor = Color.Black
-
         )
     ) { Text(text = text, fontSize = 16.sp) }
 }

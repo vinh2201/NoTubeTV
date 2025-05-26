@@ -4,19 +4,16 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.view.View
 import android.webkit.CookieManager
-import android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.multiplatform.webview.web.LoadingState
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
@@ -36,14 +33,12 @@ import kotlinx.coroutines.withContext
 fun YoutubeWV() {
 
     val context = LocalContext.current
-    val activity = context as Activity
+    val config = LocalConfiguration.current
 
     val state = rememberWebViewState("https://www.youtube.com/tv")
     val navigator = rememberWebViewNavigator()
 
-    val scripts = rememberSaveable { mutableStateOf("") }
     val exitTrigger = remember { mutableStateOf(false) }
-
     val updateData = remember { mutableStateOf<ReleaseData?>(null) }
 
 
@@ -54,25 +49,20 @@ fun YoutubeWV() {
         )
     }
 
-
     LaunchedEffect(Unit) {
         val fetchedScripts = withContext(Dispatchers.IO) { fetchScripts() }
-        val update = withContext(Dispatchers.IO) { getUpdate(context) }
+        navigator.evaluateJavaScript(fetchedScripts)
 
-        scripts.value = fetchedScripts
-        if (update!= null) updateData.value = update
+        withContext(Dispatchers.IO) {
+            getUpdate(context, navigator) { update ->
+                if (update != null) updateData.value = update
+            }
+        }
     }
 
-    if (updateData.value != null) UpdateDialog(updateData.value!!)
+    if (updateData.value != null) UpdateDialog(updateData.value!!, navigator)
+    if (exitTrigger.value) (context as Activity).finish()
 
-    LaunchedEffect(scripts.value, state.loadingState) {
-        if (scripts.value.isNotEmpty() && state.loadingState is LoadingState.Finished)
-            navigator.evaluateJavaScript(scripts.value)
-    }
-
-    if (exitTrigger.value) activity.finish()
-
-    val config = LocalConfiguration.current
 
     WebView(
         modifier = Modifier.size(
@@ -113,9 +103,6 @@ fun YoutubeWV() {
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
 
-                settings.setSupportZoom(true)
-                settings.loadWithOverviewMode = true
-                settings.mixedContentMode = MIXED_CONTENT_ALWAYS_ALLOW
             }
         }
     )
