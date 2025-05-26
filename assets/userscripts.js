@@ -132,27 +132,6 @@
 })();
 /* End speedMenuTrigger.js */
 
-/* Start permissionTrigger.js */
-(function () {
-    document.addEventListener(
-        "keydown",
-        (event) => {
-            if (event.key === "Enter" || event.keyCode === 13) {
-                const micBtn = document.querySelector("ytlr-search-voice-mic-button");
-                if (micBtn) {
-                    const isFocused = micBtn.classList.contains("ytLrSearchVoiceMicButtonFocused");
-                    if (isFocused) {
-                        if (typeof PermissionBridge !== 'undefined' && PermissionBridge.onTrigger)
-                            PermissionBridge.onTrigger();
-                    }
-                }
-            }
-        },
-        true
-    );
-})();
-/* End permissionTrigger.js */
-
 /* Start exitBridge.js */
 // Exit Bridge to react to exit button call.
 (function () {
