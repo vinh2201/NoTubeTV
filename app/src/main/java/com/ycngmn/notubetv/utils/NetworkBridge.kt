@@ -18,7 +18,9 @@ class NetworkBridge(val navigator: WebViewNavigator) {
     fun fetch(url: String, videoId: String) {
         CoroutineScope(Dispatchers.Main).launch {
             val body = client.get(url).body<String>()
-            val filteredBody = filterSponsorBlock(body, videoId)
+            val filteredBody =
+                if (body.startsWith("[")) filterSponsorBlock(body, videoId)
+                else body
             val js = "window.onNetworkBridgeResponse('$filteredBody');"
             navigator.evaluateJavaScript(js)
         }
