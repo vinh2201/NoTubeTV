@@ -1339,7 +1339,6 @@
   }
 
   window.modernUI = function modernUI(update, parameters) {
-  document.querySelectorAll('[id^=tt-settings]').forEach(el => el.remove());
       const settings = [
           {
               name: 'Ad block',
@@ -1541,7 +1540,6 @@
                       customAction(cmd.showEngagementPanelEndpoint.customAction.action, cmd.showEngagementPanelEndpoint.customAction.parameters);
                       return true;
                   }
-
                   return ogResolve.call(this, cmd, _);
               };
           }
@@ -1895,6 +1893,9 @@
     }
 
     async init() {
+
+     if (!configRead('enableSponsorBlock')) return
+
       const videoHash = sha256(this.videoID).substring(0, 4);
       const categories = [
         'sponsor',
@@ -1960,10 +1961,7 @@
         return;
       }
 
-
       this.video.addEventListener('play', this.scheduleSkipHandler);
-      this.video.addEventListener('pause', this.scheduleSkipHandler);
-      this.video.addEventListener('timeupdate', this.scheduleSkipHandler);
       this.video.addEventListener('durationchange', this.durationChangeHandler);
     }
 
@@ -2099,8 +2097,6 @@
 
       if (this.video) {
         this.video.removeEventListener('play', this.scheduleSkipHandler);
-        this.video.removeEventListener('pause', this.scheduleSkipHandler);
-        this.video.removeEventListener('timeupdate', this.scheduleSkipHandler);
         this.video.removeEventListener(
           'durationchange',
           this.durationChangeHandler
@@ -2137,10 +2133,10 @@
           window.sponsorblock = null;
         }
 
-        if (configRead('enableSponsorBlock')) {
-          window.sponsorblock = new SponsorBlockHandler(videoID);
-          window.sponsorblock.init();
-        }
+
+      window.sponsorblock = new SponsorBlockHandler(videoID);
+      window.sponsorblock.init();
+
       }
     },
     false
