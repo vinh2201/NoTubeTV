@@ -156,7 +156,7 @@
 })();
 /* End exitBridge.js */
 
-/* Start TizenScrips.js */
+/* Start TizenTubeScripts.js */
 (function () {
   'use strict';
 
@@ -1904,14 +1904,13 @@
         'selfpromo',
         'music_offtopic'
       ];
-      const resp = await fetch(
-        `${sponsorblockAPI}/skipSegments/${videoHash}?categories=${encodeURIComponent(
-        JSON.stringify(categories)
-      )}`
-      );
-      const results = await resp.json();
 
-      const result = results.find((v) => v.videoID === this.videoID);
+      const resp = await new Promise(resolve => {
+          window.onNetworkBridgeResponse = jsonString => resolve(jsonString);
+          NetworkBridge.fetch(`${sponsorblockAPI}/skipSegments/${videoHash}?categories=${encodeURIComponent(JSON.stringify(categories))}`, this.videoID);
+      });
+
+      const result = JSON.parse(resp);
 
       if (!result || !result.segments || !result.segments.length) {
         return;
@@ -4172,4 +4171,4 @@
   }
 })();
 
-/* End TizenScrips.js */
+/* End TizenTubeScripts.js */
