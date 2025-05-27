@@ -14,12 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.multiplatform.webview.web.LoadingState
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import com.ycngmn.notubetv.R
 import com.ycngmn.notubetv.ui.components.UpdateDialog
 import com.ycngmn.notubetv.utils.ExitBridge
+import com.ycngmn.notubetv.utils.NetworkBridge
 import com.ycngmn.notubetv.utils.ReleaseData
 import com.ycngmn.notubetv.utils.fetchScripts
 import com.ycngmn.notubetv.utils.getUpdate
@@ -38,8 +40,10 @@ fun YoutubeWV() {
     val state = rememberWebViewState("https://www.youtube.com/tv")
     val navigator = rememberWebViewNavigator()
 
-    val exitTrigger = remember { mutableStateOf(false) }
+    val scriptData = remember { mutableStateOf<String?>(null) }
     val updateData = remember { mutableStateOf<ReleaseData?>(null) }
+
+    val exitTrigger = remember { mutableStateOf(false) }
 
 
     BackHandler {
@@ -51,13 +55,19 @@ fun YoutubeWV() {
 
     LaunchedEffect(Unit) {
         val fetchedScripts = withContext(Dispatchers.IO) { fetchScripts() }
-        navigator.evaluateJavaScript(fetchedScripts)
+        scriptData.value = fetchedScripts
 
         withContext(Dispatchers.IO) {
             getUpdate(context, navigator) { update ->
                 if (update != null) updateData.value = update
             }
         }
+    }
+
+    LaunchedEffect(scriptData.value, state.loadingState) {
+        val script = scriptData.value
+        if (script != null && state.loadingState == LoadingState.Finished)
+            navigator.evaluateJavaScript(script)
     }
 
     if (updateData.value != null) UpdateDialog(updateData.value!!, navigator)
@@ -95,6 +105,7 @@ fun YoutubeWV() {
 
             webView.apply {
                 addJavascriptInterface(ExitBridge(exitTrigger), "ExitBridge")
+                addJavascriptInterface(NetworkBridge(navigator), "NetworkBridge")
 
                 setLayerType(View.LAYER_TYPE_HARDWARE, null)
                 setInitialScale(35)
