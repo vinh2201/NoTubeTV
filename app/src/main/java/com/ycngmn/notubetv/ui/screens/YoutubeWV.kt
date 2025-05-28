@@ -29,7 +29,6 @@ import com.ycngmn.notubetv.utils.permissionHandlerChrome
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun YoutubeWV() {
@@ -44,7 +43,6 @@ fun YoutubeWV() {
     val updateData = remember { mutableStateOf<ReleaseData?>(null) }
 
     val exitTrigger = remember { mutableStateOf(false) }
-
 
     BackHandler {
         navigator.evaluateJavaScript(
@@ -91,7 +89,7 @@ fun YoutubeWV() {
             cookieManager.flush()
 
             state.webSettings.apply {
-                customUserAgentString = "Mozilla/5.0 (PS4; Leanback Shell) Cobalt/24.lts.13.1032728-gold (Sony, PS4, Wired)"
+                customUserAgentString = "Mozilla/5.0 Cobalt/25 (Sony, PS4)"
                 isJavaScriptEnabled = true
 
                 androidWebSettings.apply {
@@ -113,7 +111,6 @@ fun YoutubeWV() {
                 // Hide scrollbars
                 isVerticalScrollBarEnabled = false
                 isHorizontalScrollBarEnabled = false
-
             }
         }
     )
