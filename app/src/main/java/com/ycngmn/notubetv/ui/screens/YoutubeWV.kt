@@ -44,6 +44,7 @@ fun YoutubeWV() {
 
     val exitTrigger = remember { mutableStateOf(false) }
 
+    // Translate native back-presses to 'escape' button press
     BackHandler {
         navigator.evaluateJavaScript(
             context.resources.openRawResource(R.raw.back_bridge)
@@ -51,6 +52,7 @@ fun YoutubeWV() {
         )
     }
 
+    // Fetch scripts and updates at launch from Github
     LaunchedEffect(Unit) {
         val fetchedScripts = withContext(Dispatchers.IO) { fetchScripts() }
         scriptData.value = fetchedScripts
@@ -61,14 +63,16 @@ fun YoutubeWV() {
             }
         }
     }
-
+    // Apply the fetched scripts to the webview, once the loading is complete.
     LaunchedEffect(scriptData.value, state.loadingState) {
         val script = scriptData.value
         if (script != null && state.loadingState == LoadingState.Finished)
             navigator.evaluateJavaScript(script)
     }
 
+    // If any update found, show the dialog.
     if (updateData.value != null) UpdateDialog(updateData.value!!, navigator)
+    // If exit button is pressed, 'finish the activity' aka 'exit the app'.
     if (exitTrigger.value) (context as Activity).finish()
 
 
@@ -89,6 +93,7 @@ fun YoutubeWV() {
             cookieManager.flush()
 
             state.webSettings.apply {
+                // This user agent provides native like experience .
                 customUserAgentString = "Mozilla/5.0 Cobalt/25 (Sony, PS4)"
                 isJavaScriptEnabled = true
 
@@ -102,10 +107,19 @@ fun YoutubeWV() {
             }
 
             webView.apply {
+
+                // Bridges the exit button click on the website to handle it natively.
                 addJavascriptInterface(ExitBridge(exitTrigger), "ExitBridge")
+
+                /*
+                Youtube's content security policy doesn't allow calling fetch on
+                3rd party websites (eg. SponsorBlock api). This bridge counters that
+                handling the requests on the native side. */
                 addJavascriptInterface(NetworkBridge(navigator), "NetworkBridge")
 
+                // Enables hardware acceleration
                 setLayerType(View.LAYER_TYPE_HARDWARE, null)
+                // Set the zoom to 35% to fit the screen. Side-effect of viewport spoofing.
                 setInitialScale(35)
 
                 // Hide scrollbars
