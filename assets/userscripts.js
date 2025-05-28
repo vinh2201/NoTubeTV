@@ -42,16 +42,17 @@
     // Create the NoTUbeTV Menu button
     const menuButton = document.createElement('button');
     menuButton.setAttribute('data-notubetv', 'menu');
-    menuButton.textContent = 'NoTubeTV Menu';
-    menuButton.style.marginLeft = '60px';
-    menuButton.style.padding = '16px 32px';
-    menuButton.style.background = 'linear-gradient(90deg, #ff0000 0%, #e60000 50%, #b30000 100%)';
-    menuButton.style.color = '#fff';
+    menuButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="62" height="62" viewBox="0 0 24 24" fill="rgba(255, 255, 255, 0.8)">
+        <path d="M20 6h-4V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v3h20V8a2 2 0 0 0-2-2zM10 4h4v2h-4V4zm10 7H2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7z"/>
+      </svg>
+    `;
+    menuButton.style.marginLeft = '54px';
+    menuButton.style.padding = '35px';
+    menuButton.style.background = 'rgba(255, 255, 255, 0.1)';
     menuButton.style.border = 'none';
-    menuButton.style.borderRadius = '22px';
-    menuButton.style.fontSize = '60px';
-    menuButton.style.fontWeight = 'bold';
-    menuButton.style.height = '120px';
+    menuButton.style.borderRadius = '88px';
+
 
     // Insert right next the search box
     parent.insertBefore(menuButton, searchBar.nextSibling);
@@ -68,7 +69,7 @@
        if (searchBar && isFocused) {
           modernUI(); // from 'userscript.js'
           menuButton = document.querySelector('button[data-notubetv="menu"]');
-          menuButton.style.background = 'black'
+          menuButton.style.background = 'white'
        }
       }
     });
@@ -1691,7 +1692,7 @@
     }
   }
 
-  function deArrowify(items) {
+  async function deArrowify(items) {
     for (const item of items) {
       if (item.adSlotRenderer) {
         const index = items.indexOf(item);
@@ -1700,25 +1701,34 @@
       }
       if (configRead('enableDeArrow')) {
         const videoID = item.tileRenderer.contentId;
-        fetch(`https://sponsor.ajay.app/api/branding?videoID=${videoID}`).then(res => res.json()).then(data => {
-          if (data.titles.length > 0) {
-            const mostVoted = data.titles.reduce((max, title) => max.votes > title.votes ? max : title);
-            item.tileRenderer.metadata.tileMetadataRenderer.title.simpleText = mostVoted.title;
-          }
-
-          if (data.thumbnails.length > 0 && configRead('enableDeArrowThumbnails')) {
-            const mostVotedThumbnail = data.thumbnails.reduce((max, thumbnail) => max.votes > thumbnail.votes ? max : thumbnail);
-            if (mostVotedThumbnail.timestamp) {
-              item.tileRenderer.header.tileHeaderRenderer.thumbnail.thumbnails = [
-                {
-                  url: `https://dearrow-thumb.ajay.app/api/v1/getThumbnail?videoID=${videoID}&time=${mostVotedThumbnail.timestamp}`,
-                  width: 1280,
-                  height: 640
-                }
-              ];
-            }
-          }
+        const resp = await new Promise(resolve => {
+          window.onNetworkBridgeResponse = jsonString => resolve(jsonString);
+          NetworkBridge.fetch(`https://sponsor.ajay.app/api/branding?videoID=${videoID}`, videoID);
         });
+
+        const data = JSON.parse(resp);
+
+        if (data.titles.length > 0) {
+          const mostVoted = data.titles.reduce((max, title) =>
+            max.votes > title.votes ? max : title
+          );
+          item.tileRenderer.metadata.tileMetadataRenderer.title.simpleText = mostVoted.title;
+        }
+
+        if (data.thumbnails.length > 0 && configRead('enableDeArrowThumbnails')) {
+          const mostVotedThumbnail = data.thumbnails.reduce((max, thumbnail) =>
+            max.votes > thumbnail.votes ? max : thumbnail
+          );
+          if (mostVotedThumbnail.timestamp) {
+            item.tileRenderer.header.tileHeaderRenderer.thumbnail.thumbnails = [
+              {
+                url: `https://dearrow-thumb.ajay.app/api/v1/getThumbnail?videoID=${videoID}&time=${mostVotedThumbnail.timestamp}`,
+                width: 1280,
+                height: 640
+              }
+            ];
+          }
+        }
       }
     }
   }
@@ -2022,40 +2032,24 @@
       clearTimeout(this.nextSkipTimeout);
       this.nextSkipTimeout = null;
 
-      if (!this.active) {
-        return;
-      }
+      if (!this.active || this.video.paused) return;
 
-      if (this.video.paused) {
-        return;
-      }
+      const current = this.video.currentTime;
 
-      // Sometimes timeupdate event (that calls scheduleSkip) gets fired right before
-      // already scheduled skip routine below. Let's just look back a little bit
-      // and, in worst case, perform a skip at negative interval (immediately)...
-      const nextSegments = this.segments.filter(
-        (seg) =>
-          seg.segment[0] > this.video.currentTime - 0.3 &&
-          seg.segment[1] > this.video.currentTime - 0.3
-      );
-      nextSegments.sort((s1, s2) => s1.segment[0] - s2.segment[0]);
+      const nextSegments = this.segments
+        .filter((seg) => seg.segment[0] >= current - 0.05)
+        .sort((a, b) => a.segment[0] - b.segment[0]);
 
-      if (!nextSegments.length) {
-        return;
-      }
+      if (!nextSegments.length) return;
 
       const [segment] = nextSegments;
       const [start, end] = segment.segment;
 
+      const delay = Math.max(0, (start - current) * 1000);
 
       this.nextSkipTimeout = setTimeout(() => {
-        if (this.video.paused) {
-          return;
-        }
-        if (!this.skippableCategories.includes(segment.category)) {
-
-          return;
-        }
+        if (this.video.paused) return;
+        if (!this.skippableCategories.includes(segment.category)) return;
 
         const skipName = barTypes[segment.category]?.name || segment.category;
         if (!this.manualSkippableCategories.includes(segment.category)) {
@@ -2063,8 +2057,9 @@
           this.video.currentTime = end;
           this.scheduleSkip();
         }
-      }, (start - this.video.currentTime) * 1000);
+      }, delay);
     }
+
 
     destroy() {
 
