@@ -9,6 +9,7 @@ import io.ktor.client.request.get
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 
 class NetworkBridge(val navigator: WebViewNavigator) {
@@ -16,13 +17,15 @@ class NetworkBridge(val navigator: WebViewNavigator) {
 
     @JavascriptInterface
     fun fetch(url: String, videoId: String) {
-        CoroutineScope(Dispatchers.Main).launch {
-            val body = client.get(url).body<String>()
-            val filteredBody =
-                if (body.startsWith("[")) filterSponsorBlock(body, videoId)
-                else body
-            val js = "window.onNetworkBridgeResponse('$filteredBody');"
-            navigator.evaluateJavaScript(js)
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val body = client.get(url).body<String>()
+                val filteredBody =
+                    if (body.startsWith("[")) filterSponsorBlock(body, videoId)
+                    else body
+                val js = "window.onNetworkBridgeResponse('$filteredBody');"
+                withContext(Dispatchers.Main) { navigator.evaluateJavaScript(js) }
+            } catch (_: Exception) { /*Just don't crash'*/ }
         }
     }
 
