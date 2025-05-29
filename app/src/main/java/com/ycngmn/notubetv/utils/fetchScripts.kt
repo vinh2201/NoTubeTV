@@ -9,6 +9,10 @@ import io.ktor.client.statement.HttpResponse
 const val SCRIPTS_URL = "https://raw.githubusercontent.com/ycngmn/NoTubeTV/refs/heads/main/assets/userscripts.js"
 suspend fun fetchScripts(): String {
     val httpClient = HttpClient(CIO)
-    val response: HttpResponse = httpClient.get(SCRIPTS_URL)
-    return response.body()
+    while (true) {
+        try {
+            val response: HttpResponse = httpClient.get(SCRIPTS_URL)
+            return response.body()
+        } catch (_: Exception) { /* retry */ }
+    }
 }

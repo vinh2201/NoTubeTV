@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.view.View
 import android.webkit.CookieManager
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -27,6 +28,7 @@ import com.ycngmn.notubetv.utils.fetchScripts
 import com.ycngmn.notubetv.utils.getUpdate
 import com.ycngmn.notubetv.utils.permissionHandlerChrome
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @SuppressLint("ConfigurationScreenWidthHeight")
@@ -39,7 +41,6 @@ fun YoutubeWV() {
     val state = rememberWebViewState("https://www.youtube.com/tv")
     val navigator = rememberWebViewNavigator()
 
-    val scriptData = remember { mutableStateOf<String?>(null) }
     val updateData = remember { mutableStateOf<ReleaseData?>(null) }
 
     val exitTrigger = remember { mutableStateOf(false) }
@@ -52,28 +53,36 @@ fun YoutubeWV() {
         )
     }
 
-    // Fetch scripts and updates at launch from Github
-    LaunchedEffect(Unit) {
-        val fetchedScripts = withContext(Dispatchers.IO) { fetchScripts() }
-        scriptData.value = fetchedScripts
+    // Fetch and apply scripts and updates at launch from Github
+    LaunchedEffect(state.loadingState) {
+        if (state.loadingState == LoadingState.Finished) {
+            val fetchedScripts = withContext(Dispatchers.IO) { fetchScripts() }
+            navigator.evaluateJavaScript(fetchedScripts)
 
-        withContext(Dispatchers.IO) {
-            getUpdate(context, navigator) { update ->
-                if (update != null) updateData.value = update
+            withContext(Dispatchers.IO) {
+                getUpdate(context, navigator) { update ->
+                    if (update != null) updateData.value = update
+                }
             }
         }
-    }
-    // Apply the fetched scripts to the webview, once the loading is complete.
-    LaunchedEffect(scriptData.value, state.loadingState) {
-        val script = scriptData.value
-        if (script != null && state.loadingState == LoadingState.Finished)
-            navigator.evaluateJavaScript(script)
     }
 
     // If any update found, show the dialog.
     if (updateData.value != null) UpdateDialog(updateData.value!!, navigator)
     // If exit button is pressed, 'finish the activity' aka 'exit the app'.
     if (exitTrigger.value) (context as Activity).finish()
+
+    // On connectivity error during loading, exit the app..
+    if (state.errorsForCurrentRequest.lastOrNull()?.description == "ERR_NAME_NOT_RESOLVED") {
+        Toast.makeText(context, "Please check your internet connection.", Toast.LENGTH_LONG).show()
+        LaunchedEffect(Unit) {
+            delay(3000)
+            exitTrigger.value = true
+        }
+    }
+    // This is the loading screen
+    val loading = state.loadingState as? LoadingState.Loading
+    if (loading != null) SplashLoading(loading.progress)
 
 
     WebView(
