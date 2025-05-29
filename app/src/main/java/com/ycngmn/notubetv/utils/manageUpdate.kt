@@ -35,9 +35,8 @@ suspend fun getUpdate(context: Context, navigator: WebViewNavigator, callback: (
     try {
         val remoteRelease = fetchUpdate()
         val remoteVersion = remoteRelease.tagName.removePrefix("v")
-        val localVersion = getVersion(context)
 
-        if (remoteVersion > localVersion) {
+        if (remoteVersion > getLocalVersion(context)) {
             getSkipVersion(navigator) {
                 val skipVersion = it?.removeSurrounding("\"")?.removePrefix("v")
                 if (skipVersion != remoteVersion)
@@ -48,6 +47,11 @@ suspend fun getUpdate(context: Context, navigator: WebViewNavigator, callback: (
         else callback(null)
 
     } catch (_: Exception) { callback(null) }
+}
+
+private fun getLocalVersion(context: Context): String {
+    val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    return pInfo.versionName.toString()
 }
 
 fun getSkipVersion(navigator: WebViewNavigator, callback: (String?) -> Unit) {
