@@ -103,7 +103,7 @@ fun YoutubeWV() {
 
             state.webSettings.apply {
                 // This user agent provides native like experience .
-                customUserAgentString = "Mozilla/5.0 Cobalt/25 (Sony, PS4)"
+                customUserAgentString = "Mozilla/5.0 Cobalt/25 (Sony, PS4, Wired)"
                 isJavaScriptEnabled = true
 
                 androidWebSettings.apply {
