@@ -1,20 +1,17 @@
 package com.ycngmn.notubetv.ui.screens
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.view.View
+import android.view.WindowManager
 import android.webkit.CookieManager
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import com.multiplatform.webview.web.LoadingState
 import com.multiplatform.webview.web.WebView
 import com.multiplatform.webview.web.rememberWebViewNavigator
@@ -28,73 +25,79 @@ import com.ycngmn.notubetv.utils.fetchScripts
 import com.ycngmn.notubetv.utils.getUpdate
 import com.ycngmn.notubetv.utils.permissionHandlerChrome
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
-@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun YoutubeWV() {
 
     val context = LocalContext.current
-    val config = LocalConfiguration.current
+    val activity = context as Activity
 
     val state = rememberWebViewState("https://www.youtube.com/tv")
     val navigator = rememberWebViewNavigator()
 
+    val shouldFetch = remember { mutableStateOf(false) }
     val updateData = remember { mutableStateOf<ReleaseData?>(null) }
 
     val exitTrigger = remember { mutableStateOf(false) }
 
     // Translate native back-presses to 'escape' button press
     BackHandler {
-        navigator.evaluateJavaScript(
-            context.resources.openRawResource(R.raw.back_bridge)
-                .bufferedReader().use { it.readText() }
-        )
+        if (state.loadingState is LoadingState.Finished)
+            navigator.evaluateJavaScript(
+                context.resources.openRawResource(R.raw.back_bridge)
+                    .bufferedReader().use { it.readText() }
+            )
+        else exitTrigger.value = true
     }
 
-    // Fetch and apply scripts and updates at launch from Github
+    // Check if the scripts already has been applied.
     LaunchedEffect(state.loadingState) {
         if (state.loadingState == LoadingState.Finished) {
-            val fetchedScripts = withContext(Dispatchers.IO) { fetchScripts() }
-            navigator.evaluateJavaScript(fetchedScripts)
-
-            withContext(Dispatchers.IO) {
-                getUpdate(context, navigator) { update ->
-                    if (update != null) updateData.value = update
-                }
+            navigator.evaluateJavaScript("(() => { return window.modernUI != null; })()") {
+               shouldFetch.value = (it == "false")
             }
         }
     }
 
+    // Fetch and apply scripts and updates at launch from Github
+    LaunchedEffect(shouldFetch.value) {
+        if (!shouldFetch.value) return@LaunchedEffect
+
+        val fetchedScripts = withContext(Dispatchers.IO) { fetchScripts() }
+        navigator.evaluateJavaScript(fetchedScripts)
+
+        withContext(Dispatchers.IO) {
+            getUpdate(context, navigator) { update ->
+                if (update != null) updateData.value = update
+            }
+        }
+    }
+    
     // If any update found, show the dialog.
     if (updateData.value != null) UpdateDialog(updateData.value!!, navigator)
     // If exit button is pressed, 'finish the activity' aka 'exit the app'.
-    if (exitTrigger.value) (context as Activity).finish()
+    if (exitTrigger.value) activity.finish()
 
-    // On connectivity error during loading, exit the app..
-    if (state.errorsForCurrentRequest.lastOrNull()?.description == "ERR_NAME_NOT_RESOLVED") {
-        Toast.makeText(context, "Please check your internet connection.", Toast.LENGTH_LONG).show()
-        LaunchedEffect(Unit) {
-            delay(3000)
-            exitTrigger.value = true
-        }
-    }
+
     // This is the loading screen
     val loading = state.loadingState as? LoadingState.Loading
     if (loading != null) SplashLoading(loading.progress)
 
 
     WebView(
-        modifier = Modifier.size(
-            config.screenWidthDp.dp,
-            config.screenHeightDp.dp
-        ),
+        modifier = Modifier.fillMaxSize(),
         state = state,
         navigator = navigator,
         platformWebViewParams = permissionHandlerChrome(context),
         captureBackPresses = false,
         onCreated = { webView ->
+
+            (activity.window).setLayout(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT
+            )
+
             // Set up cookies
             val cookieManager = CookieManager.getInstance()
             cookieManager.setAcceptCookie(true)

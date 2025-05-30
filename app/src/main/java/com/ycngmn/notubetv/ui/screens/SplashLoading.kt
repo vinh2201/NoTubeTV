@@ -1,6 +1,5 @@
 package com.ycngmn.notubetv.ui.screens
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -8,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,16 +21,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.ycngmn.notubetv.R
 
-@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun SplashLoading(progress: Float) {
-
-    val config = LocalConfiguration.current
 
     val animatedProgress by
     animateFloatAsState(
@@ -40,7 +36,7 @@ fun SplashLoading(progress: Float) {
 
     Box(
         Modifier
-            .size(config.screenWidthDp.dp, config.screenHeightDp.dp)
+            .fillMaxSize()
             .background(Color(0XFF0B0B0B))
     ) {
         Column(
