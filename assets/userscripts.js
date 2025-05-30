@@ -140,8 +140,6 @@
     enableSponsorBlockInteraction: true,
     enableSponsorBlockSelfPromo: true,
     enableSponsorBlockMusicOfftopic: true,
-    enableDeArrow: true,
-    enableDeArrowThumbnails: false,
     enableShorts: true,
   };
 
@@ -333,16 +331,6 @@
       {
         name: "Skip Off-Topic Music Segments",
         value: "enableSponsorBlockMusicOfftopic",
-      },
-      {
-        name: "DeArrow",
-        icon: "VISIBILITY_OFF",
-        value: "enableDeArrow",
-      },
-      {
-        name: "DeArrow Thumbnails",
-        icon: "TV",
-        value: "enableDeArrowThumbnails",
       },
       {
         name: "Shorts",
@@ -539,30 +527,6 @@
         );
     }
 
-    // DeArrow Implementation. I think this is the best way to do it. (DOM manipulation would be a pain)
-
-    if (
-      r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content
-        ?.sectionListRenderer?.contents
-    ) {
-      processShelves(
-        r.contents.tvBrowseRenderer.content.tvSurfaceContentRenderer.content
-          .sectionListRenderer.contents
-      );
-    }
-
-    if (r?.contents?.sectionListRenderer?.contents) {
-      processShelves(r.contents.sectionListRenderer.contents);
-    }
-
-    if (r?.continuationContents?.sectionListContinuation?.contents) {
-      processShelves(r.continuationContents.sectionListContinuation.contents);
-    }
-
-    if (r?.continuationContents?.horizontalListContinuation?.items) {
-      deArrowify(r.continuationContents.horizontalListContinuation.items);
-    }
-
     if (
       !configRead("enableShorts") &&
       r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content
@@ -578,61 +542,6 @@
     return r;
   };
 
-  function processShelves(shelves) {
-    for (const shelve of shelves) {
-      if (shelve.shelfRenderer) {
-        deArrowify(shelve.shelfRenderer.content.horizontalListRenderer.items);
-      }
-    }
-  }
-
-  async function deArrowify(items) {
-    for (const item of items) {
-      if (item.adSlotRenderer) {
-        const index = items.indexOf(item);
-        items.splice(index, 1);
-        continue;
-      }
-      if (configRead("enableDeArrow")) {
-        const videoID = item.tileRenderer.contentId;
-        const resp = await new Promise((resolve) => {
-          window.onNetworkBridgeResponse = (jsonString) => resolve(jsonString);
-          NetworkBridge.fetch(
-            `https://sponsor.ajay.app/api/branding?videoID=${videoID}`,
-            videoID
-          );
-        });
-
-        const data = JSON.parse(resp);
-
-        if (data.titles.length > 0) {
-          const mostVoted = data.titles.reduce((max, title) =>
-            max.votes > title.votes ? max : title
-          );
-          item.tileRenderer.metadata.tileMetadataRenderer.title.simpleText =
-            mostVoted.title;
-        }
-
-        if (
-          data.thumbnails.length > 0 &&
-          configRead("enableDeArrowThumbnails")
-        ) {
-          const mostVotedThumbnail = data.thumbnails.reduce((max, thumbnail) =>
-            max.votes > thumbnail.votes ? max : thumbnail
-          );
-          if (mostVotedThumbnail.timestamp) {
-            item.tileRenderer.header.tileHeaderRenderer.thumbnail.thumbnails = [
-              {
-                url: `https://dearrow-thumb.ajay.app/api/v1/getThumbnail?videoID=${videoID}&time=${mostVotedThumbnail.timestamp}`,
-                width: 1280,
-                height: 640,
-              },
-            ];
-          }
-        }
-      }
-    }
-  }
 
   // The tiny-sha256 module, edited to export itself.
   var sha256 = function sha256(ascii) {
@@ -1080,5 +989,4 @@
     );
   }
 })();
-
 /* End TizenTubeScripts.js */
