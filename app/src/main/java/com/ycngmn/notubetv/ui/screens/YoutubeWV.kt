@@ -53,15 +53,10 @@ fun YoutubeWV(youtubeVM: MainViewModel = viewModel()) {
         else exitTrigger.value = true
     }
 
-    // Fetch and apply scripts and updates at launch from Github
-    LaunchedEffect(loadingState) {
-        if (loadingState != LoadingState.Finished) return@LaunchedEffect
-
-        val fetchedScripts = jsScript ?: withContext(Dispatchers.IO) { fetchScripts() }
-        navigator.evaluateJavaScript(fetchedScripts)
-        if (jsScript == null) youtubeVM.setScript(fetchedScripts)
-        if (updateData != null) return@LaunchedEffect
-
+    // Fetch scripts and updates at launch
+    LaunchedEffect(Unit) {
+        val fetchedScripts = withContext(Dispatchers.IO) { fetchScripts() }
+        youtubeVM.setScript(fetchedScripts)
         withContext(Dispatchers.IO) {
             getUpdate(context, navigator) { update ->
                 if (update != null) youtubeVM.setUpdate(update)
@@ -69,6 +64,8 @@ fun YoutubeWV(youtubeVM: MainViewModel = viewModel()) {
         }
     }
 
+    if (loadingState == LoadingState.Finished && jsScript != null)
+        navigator.evaluateJavaScript(jsScript)
     // If any update found, show the dialog.
     if (updateData != null) UpdateDialog(updateData, navigator)
     // If exit button is pressed, 'finish the activity' aka 'exit the app'.
@@ -100,7 +97,8 @@ fun YoutubeWV(youtubeVM: MainViewModel = viewModel()) {
             cookieManager.flush()
 
             state.webSettings.apply {
-                // This user agent provides native like experience .
+                // This user agent provides native like experience.
+                // "PS4" for 4K. "Wired" for previews.
                 customUserAgentString = "Mozilla/5.0 Cobalt/25 (Sony, PS4, Wired)"
                 isJavaScriptEnabled = true
 
