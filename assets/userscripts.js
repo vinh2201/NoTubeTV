@@ -139,7 +139,7 @@
     enableSponsorBlockOutro: true,
     enableSponsorBlockInteraction: true,
     enableSponsorBlockSelfPromo: true,
-    enableSponsorBlockMusicOfftopic: true,
+    enableSponsorBlockMusicOfftopic: false,
     enableShorts: true,
   };
 
