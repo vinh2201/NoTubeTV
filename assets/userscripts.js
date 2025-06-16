@@ -538,6 +538,13 @@
         );
     }
 
+    // Remove shorts ads
+    if (!Array.isArray(r) && r?.entries && configRead('enableAdBlock')) {
+      r.entries = r.entries?.filter(
+        (elm) => !elm?.command?.reelWatchEndpoint?.adClientParams?.isAd
+      );
+    }
+
     return r;
   };
 
